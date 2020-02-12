@@ -1,0 +1,74 @@
+version: '2'
+
+services:
+    application:
+        container_name: application
+        image: debian
+        volumes:
+            - ./:/var/www/laravel
+    workspace:
+        container_name: workspace
+        build:
+            context: ./docker/workspace
+        volumes_from:
+            - application
+        tty: true
+    php-fpm:
+        container_name: php-fpm
+        build:
+            context: ./docker/laravel-php-fpm
+        volumes_from:
+            - application
+        expose:
+            - "9000"
+        links:
+            - workspace
+    nginx:
+        container_name: nginx
+        build:
+            context: ./docker/laravel-nginx
+        volumes_from:
+            - data
+            - logs
+            - application
+        ports:
+            - "2020:80"
+        links:
+            - php-fpm
+    data:
+        container_name: data
+        image: debian
+        volumes:
+            - .docker/mysql:/var/lib/mysql
+            - .docker/data:/data
+    logs:
+        container_name: logs
+        image: debian
+        volumes:
+            - .docker/logs/nginx:/var/log/nginx
+            - .docker/logs/mongodb:/var/log/mongodb
+    mysql:
+        container_name: mysql
+        image: mysql:5.7
+        volumes_from:
+            - data
+            - logs
+        expose:
+            - "3306"
+        environment:
+            MYSQL_DATABASE: php5
+            MYSQL_USER: root
+            MYSQL_PASSWORD: secret
+            MYSQL_ROOT_PASSWORD: root
+    phpmyadmin:
+        container_name: phpmyadmin
+        image: phpmyadmin/phpmyadmin
+        environment:
+            PMA_ARBITRARY: 1
+            MYSQL_USER: root
+            MYSQL_PASSWORD: secret
+            MYSQL_ROOT_PASSWORD: root
+        ports:
+            - "8282:80"
+        links:
+            - "mysql:mysql"
