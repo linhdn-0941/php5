@@ -16,6 +16,8 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     && rm -r /var/lib/apt/lists/*
 
+RUN docker-php-ext-install mcrypt
+
 RUN usermod -u 1000 www-data
 
 WORKDIR /var/www/laravel
